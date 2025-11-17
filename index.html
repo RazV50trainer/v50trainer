@@ -18,38 +18,32 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      height: 100%;
       padding: 20px;
-      box-sizing: border-box;
     }
     h2 {
-      margin: 0 0 10px;
       font-size: 20px;
-      color: #f5f5f5;
+      margin-bottom: 10px;
     }
     #pattern-box {
-      margin-top: 25px;
-      margin-bottom: 25px;
+      margin-top: 20px;
+      margin-bottom: 20px;
       padding: 12px 18px;
       border-radius: 6px;
       background: #0c121c;
       border: 1px solid #202633;
-      min-width: 80%;
-      display: flex;
-      justify-content: center;
+      width: 85%;
+      text-align: center;
     }
     #pattern {
       font-size: 40px;
-      letter-spacing: 4px;
-      font-family: "Menlo", "SF Mono", monospace;
       white-space: nowrap;
+      font-family: "Menlo", "SF Mono", monospace;
     }
     .btn-row {
       margin: 6px 0;
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
+      flex-wrap: wrap;
       gap: 6px;
     }
     button {
@@ -61,76 +55,24 @@
       font-size: 13px;
       cursor: pointer;
     }
-    button:active {
-      background: #222b3b;
-    }
     #generate {
-      margin-top: 6px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       padding: 8px 16px;
-      font-size: 14px;
       background: #1f7aff;
       border-color: #1f7aff;
-      color: #ffffff;
+      color: #fff;
       border-radius: 5px;
     }
-    #generate:active {
-      background: #155bcc;
-    }
     #result {
-      margin-top: 12px;
+      margin-top: 14px;
       font-size: 17px;
-      min-height: 22px;
       text-align: center;
-    }
-
-    /* Экран пароля */
-    #login-screen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      padding: 20px;
-      box-sizing: border-box;
-    }
-    #login-screen h1 {
-      font-size: 22px;
-      margin-bottom: 16px;
-    }
-    #login-screen input {
-      padding: 8px 10px;
-      border-radius: 4px;
-      border: 1px solid #30384a;
-      background: #151b28;
-      color: #e5e5e5;
-      font-size: 14px;
-      width: 200px;
-      box-sizing: border-box;
-      margin-bottom: 10px;
-      text-align: center;
-    }
-    #login-error {
-      margin-top: 6px;
-      color: #ff4d4f;
-      font-size: 13px;
-      min-height: 16px;
     }
   </style>
 </head>
 
 <body>
-  <!-- Экран пароля -->
-  <div id="login-screen">
-    <h1>Вход</h1>
-    <p>Введите пароль, чтобы открыть тренажёр.</p>
-    <input type="password" id="pwd-input" placeholder="Пароль">
-    <button onclick="unlock()">Войти</button>
-    <div id="login-error"></div>
-  </div>
-
-  <!-- Основное приложение (изначально скрыто) -->
-  <div class="wrap" id="app" style="display:none;">
+  <div class="wrap">
 
     <h2>V50 Trainer — паттерны 5 тиков</h2>
 
@@ -140,65 +82,28 @@
 
     <button id="generate" onclick="generate()">Сгенерировать паттерн</button>
 
-    <!-- РЯД 1 — входовые -->
     <div class="btn-row">
       <button onclick="check('impulse')">Импульс</button>
       <button onclick="check('imp_pull')">Импульс+откат</button>
       <button onclick="check('double')">Двойной укус</button>
     </div>
 
-    <!-- РЯД 2 — входовые -->
     <div class="btn-row">
       <button onclick="check('break')">Breakout</button>
       <button onclick="check('stairs')">Лестница</button>
       <button onclick="check('bite')">Укус+импульс</button>
     </div>
 
-    <!-- РЯД 3 — пропуск -->
     <div class="btn-row">
       <button onclick="check('noise')">Пила</button>
       <button onclick="check('late')">Поздний вход</button>
       <button onclick="check('fake')">Ложный выброс</button>
+      <button onclick="check('flat')">Флэт</button>
     </div>
 
     <div id="result"></div>
 
   </div>
-
-  <script>
-    // простой "пароль" на клиенте
-    const PASSWORD = "Razma50V"; // Можешь сменить на любой свой
-
-    function unlock() {
-      const input = document.getElementById("pwd-input");
-      const error = document.getElementById("login-error");
-      const value = input.value.trim();
-
-      if (value === PASSWORD) {
-        document.getElementById("login-screen").style.display = "none";
-        document.getElementById("app").style.display = "flex";
-        error.innerHTML = "";
-        // сразу сгенерируем первый паттерн
-        if (typeof generate === "function") {
-          generate();
-        }
-      } else {
-        error.innerHTML = "Неверный пароль.";
-      }
-    }
-
-    // Позволяет нажать Enter для входа
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("pwd-input");
-      if (input) {
-        input.addEventListener("keyup", (e) => {
-          if (e.key === "Enter") {
-            unlock();
-          }
-        });
-      }
-    });
-  </script>
 
   <script src="trainer.js"></script>
 </body>
