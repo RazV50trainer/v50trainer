@@ -34,6 +34,11 @@ const patternMeta = {
     action: "Вход",
     hint: "ступеньки по тренду, по ним входи в сторону движения"
   },
+  bite: {
+    label: "укус + импульс",
+    action: "Вход",
+    hint: "после укуса и входа импульса можно заходить"
+  },
   noise: {
     label: "пила",
     action: "Пропуск",
@@ -43,38 +48,51 @@ const patternMeta = {
     label: "поздний вход",
     action: "Пропуск",
     hint: "импульс перегрет, такие нужно пропускать"
+  },
+  fake: {
+    label: "ложный выброс из флэта",
+    action: "Пропуск",
+    hint: "это ложный выброс из боковика, его нужно пропускать"
   }
 };
 
-// Набор паттернов
+// Набор паттернов (9 типов, вверх/вниз)
 const patterns = [
-  // Импульс
+  // 1) Импульс
   { type: "impulse",  p: "↑↑↑" },
   { type: "impulse",  p: "↓↓↓" },
 
-  // Импульс + микро-откат
+  // 2) Импульс + микро-откат
   { type: "imp_pull", p: "↑↑↑↓↑↑" },
   { type: "imp_pull", p: "↓↓↓↑↓↓" },
 
-  // Двойной укус
+  // 3) Двойной укус
   { type: "double",   p: "↑↓↑" },
   { type: "double",   p: "↓↑↓" },
 
-  // Breakout
+  // 4) Breakout (пробой флэта)
   { type: "break",    p: "→→→↑↑↑" },
   { type: "break",    p: "→→→↓↓↓" },
 
-  // Лестница
+  // 5) Лестница по тренду
   { type: "stairs",   p: "↑→↑→↑" },
   { type: "stairs",   p: "↓→↓→↓" },
 
-  // Пила / шум
+  // 6) Укус + импульс
+  { type: "bite",     p: "↑↓↑↑↑" },
+  { type: "bite",     p: "↓↑↓↓↓" },
+
+  // 7) Пила / шум (ПРОПУСК)
   { type: "noise",    p: "↑↓↑↓↑" },
   { type: "noise",    p: "↓↑↓↑↓" },
 
-  // Поздний вход (перегретый импульс)
+  // 8) Поздний вход (перегретый импульс) (ПРОПУСК)
   { type: "late",     p: "↑↑↑↑↑" },
-  { type: "late",     p: "↓↓↓↓↓" }
+  { type: "late",     p: "↓↓↓↓↓" },
+
+  // 9) Флет с ложным выбросом (ПРОПУСК)
+  { type: "fake",     p: "→→→↑→→" },
+  { type: "fake",     p: "→→→↓→→" }
 ];
 
 // Отрисовка стрелок с цветом (как тики)
@@ -147,22 +165,20 @@ function check(answer) {
 
   if (answer === currentType) {
     // Верно
+    correctCount++;
     if (meta.action === "Вход") {
-      correctCount++;
-      res.innerHTML =
-        `<span style="color:#3ddc84">Верно. Вход.</span>`;
+      res.innerHTML = `<span style="color:#3ddc84">Верно. Вход.</span>`;
     } else {
-      correctCount++;
-      res.innerHTML =
-        `<span style="color:#3ddc84">Верно. Пропуск.</span>`;
+      res.innerHTML = `<span style="color:#3ddc84">Верно. Пропуск.</span>`;
     }
   } else {
     // Неверно
     wrongCount++;
+    // Пример: "Неверно. Это пила, при ней пропускай."
     res.innerHTML =
       `<span style="color:#ff4d4f">Неверно.</span> Это ${meta.label}, ${meta.hint}.`;
   }
 
-  // Добавляем счётчик
+  // Счётчик
   res.innerHTML += `<br>Счёт: верно ${correctCount}, неверно ${wrongCount}.`;
 }
