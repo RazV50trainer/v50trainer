@@ -32,7 +32,7 @@ const patternMeta = {
   stairs: {
     label: "лестница",
     action: "Вход",
-    hint: "ступеньки по тренду, по ним входи в сторону движения"
+    hint: "ступеньки по тренду, по ним входи"
   },
   bite: {
     label: "укус + импульс",
@@ -53,49 +53,59 @@ const patternMeta = {
     label: "ложный выброс из флэта",
     action: "Пропуск",
     hint: "это ложный выброс из боковика, его нужно пропускать"
+  },
+  flat: {
+    label: "флэт",
+    action: "Пропуск",
+    hint: "при флэте всегда пропускай"
   }
 };
 
-// Набор паттернов (9 типов, вверх/вниз)
+// Набор паттернов (10 типов)
 const patterns = [
-  // 1) Импульс
+  // 1) Импульс (ВХОД)
   { type: "impulse",  p: "↑↑↑" },
   { type: "impulse",  p: "↓↓↓" },
 
-  // 2) Импульс + микро-откат
+  // 2) Импульс + микро-откат (ВХОД)
   { type: "imp_pull", p: "↑↑↑↓↑↑" },
   { type: "imp_pull", p: "↓↓↓↑↓↓" },
 
-  // 3) Двойной укус
+  // 3) Двойной укус (ВХОД)
   { type: "double",   p: "↑↓↑" },
   { type: "double",   p: "↓↑↓" },
 
-  // 4) Breakout (пробой флэта)
+  // 4) Breakout (ВХОД)
   { type: "break",    p: "→→→↑↑↑" },
   { type: "break",    p: "→→→↓↓↓" },
 
-  // 5) Лестница по тренду
+  // 5) Лестница (ВХОД)
   { type: "stairs",   p: "↑→↑→↑" },
   { type: "stairs",   p: "↓→↓→↓" },
 
-  // 6) Укус + импульс
+  // 6) Укус + импульс (ВХОД)
   { type: "bite",     p: "↑↓↑↑↑" },
   { type: "bite",     p: "↓↑↓↓↓" },
 
-  // 7) Пила / шум (ПРОПУСК)
+  // 7) Пила (ПРОПУСК)
   { type: "noise",    p: "↑↓↑↓↑" },
   { type: "noise",    p: "↓↑↓↑↓" },
 
-  // 8) Поздний вход (перегретый импульс) (ПРОПУСК)
+  // 8) Поздний вход (ПРОПУСК)
   { type: "late",     p: "↑↑↑↑↑" },
   { type: "late",     p: "↓↓↓↓↓" },
 
-  // 9) Флет с ложным выбросом (ПРОПУСК)
+  // 9) Ложный выброс (ПРОПУСК)
   { type: "fake",     p: "→→→↑→→" },
-  { type: "fake",     p: "→→→↓→→" }
+  { type: "fake",     p: "→→→↓→→" },
+
+  // 10) Флэт (ПРОПУСК)
+  { type: "flat",     p: "→→→→→" },   // чистый
+  { type: "flat",     p: "→→→→" },    // короткий
+  { type: "flat",     p: "→↑→↓→" }    // «дышащий»
 ];
 
-// Отрисовка стрелок с цветом (как тики)
+// Цвет стрелок
 function renderPattern(str) {
   const container = document.getElementById("pattern");
   container.innerHTML = "";
@@ -104,24 +114,17 @@ function renderPattern(str) {
     const span = document.createElement("span");
     span.textContent = ch;
 
-    if (ch === "↑") {
-      span.style.color = "#3ddc84";    // вверх — зелёный
-    } else if (ch === "↓") {
-      span.style.color = "#ff4d4f";    // вниз — красный
-    } else if (ch === "→") {
-      span.style.color = "#999999";    // флэт — серый
-    } else {
-      span.style.color = "#e5e5e5";
-    }
+    if (ch === "↑") span.style.color = "#3ddc84";
+    else if (ch === "↓") span.style.color = "#ff4d4f";
+    else span.style.color = "#999999";
 
     span.style.marginRight = "3px";
     container.appendChild(span);
   }
 }
 
-// Генерация нового паттерна и ПОШАГОВАЯ отрисовка
+// Появление стрелок по одной (1.5 секунды)
 function generate() {
-  // Остановить прошлую анимацию
   if (revealTimer) {
     clearInterval(revealTimer);
     revealTimer = null;
@@ -130,6 +133,7 @@ function generate() {
   const pick = patterns[Math.floor(Math.random() * patterns.length)];
   currentType = pick.type;
   currentPattern = pick.p;
+
   currentIndex = 0;
   answered = false;
 
@@ -137,48 +141,33 @@ function generate() {
   res.innerHTML = "";
   renderPattern("");
 
-  // Появление стрелок по одной каждые 1.5 секунды
   revealTimer = setInterval(() => {
     if (currentIndex < currentPattern.length) {
       currentIndex++;
-      const part = currentPattern.slice(0, currentIndex);
-      renderPattern(part);
+      renderPattern(currentPattern.slice(0, currentIndex));
     } else {
       clearInterval(revealTimer);
       revealTimer = null;
     }
-  }, 1500); // 1.5 секунды между стрелками
+  }, 1500);
 }
 
-// Проверка ответа
 function check(answer) {
-  if (!currentType) return;
-  if (answered) return; // не считаем повторные клики по одному паттерну
+  if (!currentType || answered) return;
   answered = true;
 
   const res = document.getElementById("result");
-  const meta = patternMeta[currentType] || {
-    label: "неизвестный паттерн",
-    action: "Пропуск",
-    hint: "пропускай"
-  };
+  const meta = patternMeta[currentType];
 
   if (answer === currentType) {
-    // Верно
     correctCount++;
-    if (meta.action === "Вход") {
-      res.innerHTML = `<span style="color:#3ddc84">Верно. Вход.</span>`;
-    } else {
-      res.innerHTML = `<span style="color:#3ddc84">Верно. Пропуск.</span>`;
-    }
+    res.innerHTML =
+      `<span style="color:#3ddc84">Верно. ${meta.action}.</span>`;
   } else {
-    // Неверно
     wrongCount++;
-    // Пример: "Неверно. Это пила, при ней пропускай."
     res.innerHTML =
       `<span style="color:#ff4d4f">Неверно.</span> Это ${meta.label}, ${meta.hint}.`;
   }
 
-  // Счётчик
   res.innerHTML += `<br>Счёт: верно ${correctCount}, неверно ${wrongCount}.`;
 }
