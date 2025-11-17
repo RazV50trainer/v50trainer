@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>V50 Trainer</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+<style>
+body { font-family: Arial; text-align:center; padding:20px; }
+#pattern { font-size:48px; margin:40px 0; }
+button { font-size:18px; padding:10px 20px; margin:6px; }
+</style>
+</head>
+<body>
+<h2>V50 Trainer</h2>
+<div id="pattern">---</div>
+<button onclick="generate()">Сгенерировать</button><br>
+<button onclick="check('impulse')">Импульс</button>
+<button onclick="check('imp_pull')">Импульс+откат</button>
+<button onclick="check('double')">Двойной укус</button>
+<button onclick="check('break')">Breakout</button>
+<button onclick="check('stairs')">Лестница</button>
+<button onclick="check('noise')">Пила</button>
+<button onclick="check('late')">Поздний вход</button>
+<div id="result" style="margin-top:20px;font-size:20px;"></div>
+<script src="trainer.js"></script>
+</body>
+</html>
