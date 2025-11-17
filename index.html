@@ -14,11 +14,47 @@
       color: #e5e5e5;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
     }
-    .wrap {
+    #login-screen {
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      height: 100%;
       padding: 20px;
+      box-sizing: border-box;
+    }
+    #login-screen h1 {
+      font-size: 22px;
+      margin-bottom: 12px;
+    }
+    #login-screen p {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: #bbbbbb;
+    }
+    #login-screen input {
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #30384a;
+      background: #151b28;
+      color: #e5e5e5;
+      font-size: 14px;
+      width: 200px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    #login-error {
+      margin-top: 4px;
+      color: #ff4d4f;
+      font-size: 13px;
+      min-height: 16px;
+    }
+    .wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
     }
     h2 {
       font-size: 20px;
@@ -26,7 +62,7 @@
     }
     #pattern-box {
       margin-top: 20px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       padding: 12px 18px;
       border-radius: 6px;
       background: #0c121c;
@@ -38,6 +74,20 @@
       font-size: 40px;
       white-space: nowrap;
       font-family: "Menlo", "SF Mono", monospace;
+    }
+    .controls {
+      margin: 6px 0 10px 0;
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      align-items: center;
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
     .btn-row {
       margin: 6px 0;
@@ -55,29 +105,71 @@
       font-size: 13px;
       cursor: pointer;
     }
+    button:active {
+      background: #222b3b;
+    }
     #generate {
-      margin-bottom: 10px;
       padding: 8px 16px;
       background: #1f7aff;
       border-color: #1f7aff;
       color: #fff;
       border-radius: 5px;
+      margin-bottom: 6px;
     }
     #result {
-      margin-top: 14px;
-      font-size: 17px;
+      margin-top: 10px;
+      font-size: 16px;
       text-align: center;
+      min-height: 40px;
+    }
+    #stats {
+      margin-top: 8px;
+      font-size: 14px;
+      text-align: center;
+      color: #bcbcbc;
+      min-height: 60px;
     }
   </style>
 </head>
 
 <body>
-  <div class="wrap">
+
+  <!-- Экран входа -->
+  <div id="login-screen">
+    <h1>Вход</h1>
+    <p>Введите пароль, чтобы открыть тренажёр.</p>
+    <input type="password" id="pwd-input" placeholder="Пароль">
+    <button onclick="unlock()">Войти</button>
+    <div id="login-error"></div>
+  </div>
+
+  <!-- Основное приложение -->
+  <div class="wrap" id="app">
 
     <h2>V50 Trainer — паттерны 5 тиков</h2>
 
     <div id="pattern-box">
       <div id="pattern">---</div>
+    </div>
+
+    <div class="controls">
+      <label>
+        Сложность:
+        <select id="difficulty">
+          <option value="easy">Лёгкая</option>
+          <option value="medium">Средняя</option>
+          <option value="hard">Сложная</option>
+        </select>
+      </label>
+      <label>
+        <input type="checkbox" id="soundToggle" checked>
+        Звук тиков
+      </label>
+      <label>
+        <input type="checkbox" id="blindToggle">
+        Слепой режим
+      </label>
+      <button onclick="resetStats()">Сброс статистики</button>
     </div>
 
     <button id="generate" onclick="generate()">Сгенерировать паттерн</button>
@@ -102,8 +194,38 @@
     </div>
 
     <div id="result"></div>
+    <div id="stats"></div>
 
   </div>
+
+  <script>
+    const PASSWORD = "v50pass"; // при желании замени на свой
+
+    function unlock() {
+      const input = document.getElementById("pwd-input");
+      const error = document.getElementById("login-error");
+      const val = (input.value || "").trim();
+
+      if (val === PASSWORD) {
+        document.getElementById("login-screen").style.display = "none";
+        const app = document.getElementById("app");
+        app.style.display = "flex";
+        error.innerHTML = "";
+        if (typeof generate === "function") generate();
+      } else {
+        error.innerHTML = "Неверный пароль.";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("pwd-input");
+      if (input) {
+        input.addEventListener("keyup", e => {
+          if (e.key === "Enter") unlock();
+        });
+      }
+    });
+  </script>
 
   <script src="trainer.js"></script>
 </body>
