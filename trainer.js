@@ -2,19 +2,51 @@ let currentType = "";
 let currentPattern = "";
 let revealTimer = null;
 let currentIndex = 0;
+let answered = false;
 
-// Справочник паттернов: тип → надпись и режим (вход/пропуск)
+let correctCount = 0;
+let wrongCount = 0;
+
+// Метаданные по паттернам: название и что делать
 const patternMeta = {
-  impulse:   { name: "Импульс",           action: "ВХОД" },
-  imp_pull:  { name: "Импульс + откат",   action: "ВХОД" },
-  double:    { name: "Двойной укус",      action: "ВХОД" },
-  break:     { name: "Breakout",          action: "ВХОД" },
-  stairs:    { name: "Лестница",          action: "ВХОД" },
-  noise:     { name: "Пила (шум)",        action: "ПРОПУСК" },
-  late:      { name: "Поздний вход",      action: "ПРОПУСК" }
+  impulse: {
+    label: "импульс",
+    action: "Вход",
+    hint: "по нему входи по направлению движения"
+  },
+  imp_pull: {
+    label: "импульс с откатом",
+    action: "Вход",
+    hint: "это сильный импульс с микрокоррекцией, по нему входи"
+  },
+  double: {
+    label: "двойной укус",
+    action: "Вход",
+    hint: "после второго укуса можно входить по направлению"
+  },
+  break: {
+    label: "breakout",
+    action: "Вход",
+    hint: "это пробой, по нему входи в сторону выхода"
+  },
+  stairs: {
+    label: "лестница",
+    action: "Вход",
+    hint: "ступеньки по тренду, по ним входи в сторону движения"
+  },
+  noise: {
+    label: "пила",
+    action: "Пропуск",
+    hint: "при ней пропускай"
+  },
+  late: {
+    label: "поздний вход",
+    action: "Пропуск",
+    hint: "импульс перегрет, такие нужно пропускать"
+  }
 };
 
-// Набор паттернов (как раньше, только через общий массив)
+// Набор паттернов
 const patterns = [
   // Импульс
   { type: "impulse",  p: "↑↑↑" },
@@ -45,7 +77,7 @@ const patterns = [
   { type: "late",     p: "↓↓↓↓↓" }
 ];
 
-// Отрисовка строки стрелок с цветами (как на тиках)
+// Отрисовка стрелок с цветом (как тики)
 function renderPattern(str) {
   const container = document.getElementById("pattern");
   container.innerHTML = "";
@@ -71,7 +103,7 @@ function renderPattern(str) {
 
 // Генерация нового паттерна и ПОШАГОВАЯ отрисовка
 function generate() {
-  // Останавливаем предыдущую анимацию, если была
+  // Остановить прошлую анимацию
   if (revealTimer) {
     clearInterval(revealTimer);
     revealTimer = null;
@@ -81,13 +113,13 @@ function generate() {
   currentType = pick.type;
   currentPattern = pick.p;
   currentIndex = 0;
+  answered = false;
 
-  // Сброс отображения
   const res = document.getElementById("result");
   res.innerHTML = "";
-  renderPattern(""); // очищаем поле
+  renderPattern("");
 
-  // Каждую секунду добавляем по одной стрелке
+  // Появление стрелок по одной каждые 1.5 секунды
   revealTimer = setInterval(() => {
     if (currentIndex < currentPattern.length) {
       currentIndex++;
@@ -97,25 +129,40 @@ function generate() {
       clearInterval(revealTimer);
       revealTimer = null;
     }
-  }, 1000); // 1000 мс = 1 секунда
+  }, 1500); // 1.5 секунды между стрелками
 }
 
 // Проверка ответа
 function check(answer) {
   if (!currentType) return;
+  if (answered) return; // не считаем повторные клики по одному паттерну
+  answered = true;
 
   const res = document.getElementById("result");
-  const meta = patternMeta[currentType] || { name: "Неизвестно", action: "" };
+  const meta = patternMeta[currentType] || {
+    label: "неизвестный паттерн",
+    action: "Пропуск",
+    hint: "пропускай"
+  };
 
   if (answer === currentType) {
-    // Верный ответ: показать режим (вход/пропуск) и название
-    res.innerHTML =
-      "<span style='color:#3ddc84'>Верно</span>" +
-      ` — ${meta.name} (${meta.action})`;
+    // Верно
+    if (meta.action === "Вход") {
+      correctCount++;
+      res.innerHTML =
+        `<span style="color:#3ddc84">Верно. Вход.</span>`;
+    } else {
+      correctCount++;
+      res.innerHTML =
+        `<span style="color:#3ddc84">Верно. Пропуск.</span>`;
+    }
   } else {
-    // Неверный: показать, что это был за паттерн
+    // Неверно
+    wrongCount++;
     res.innerHTML =
-      "<span style='color:#ff4d4f'>Неверно</span>" +
-      `. Это: ${meta.name} (${meta.action}).`;
+      `<span style="color:#ff4d4f">Неверно.</span> Это ${meta.label}, ${meta.hint}.`;
   }
+
+  // Добавляем счётчик
+  res.innerHTML += `<br>Счёт: верно ${correctCount}, неверно ${wrongCount}.`;
 }
