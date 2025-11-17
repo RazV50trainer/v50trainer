@@ -6,6 +6,16 @@ let answered = false;
 
 let correctCount = 0;
 let wrongCount = 0;
+let bestStreak = 0;
+let currentStreak = 0;
+let totalPatterns = 0;
+
+let sumReactionMs = 0;
+let reactionSamples = 0;
+let firstTickTime = null;
+
+let revealIntervalMs = 1500; // базовая сложность (легкий)
+let audioCtx = null;
 
 // Метаданные по паттернам: название и что делать
 const patternMeta = {
@@ -105,25 +115,57 @@ const patterns = [
   { type: "flat",     p: "→↑→↓→" }    // «дышащий»
 ];
 
-// Цвет стрелок
+// Цвет стрелок + "слепой" режим
 function renderPattern(str) {
   const container = document.getElementById("pattern");
   container.innerHTML = "";
+
+  const blindToggle = document.getElementById("blindToggle");
+  const blind = blindToggle && blindToggle.checked;
 
   for (const ch of str) {
     const span = document.createElement("span");
     span.textContent = ch;
 
-    if (ch === "↑") span.style.color = "#3ddc84";
-    else if (ch === "↓") span.style.color = "#ff4d4f";
-    else span.style.color = "#999999";
+    if (blind) {
+      span.style.color = "#e5e5e5";
+    } else {
+      if (ch === "↑") span.style.color = "#3ddc84";
+      else if (ch === "↓") span.style.color = "#ff4d4f";
+      else span.style.color = "#999999";
+    }
 
     span.style.marginRight = "3px";
     container.appendChild(span);
   }
 }
 
-// Появление стрелок по одной (1.5 секунды)
+// Звук тика
+function playTick() {
+  const soundToggle = document.getElementById("soundToggle");
+  if (soundToggle && !soundToggle.checked) return;
+
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+
+  if (!audioCtx) {
+    audioCtx = new AudioCtx();
+  }
+
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "square";
+  osc.frequency.value = 900;
+  gain.gain.value = 0.03;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
+}
+
+// Генерация паттерна и пошаговая отрисовка
 function generate() {
   if (revealTimer) {
     clearInterval(revealTimer);
@@ -136,38 +178,124 @@ function generate() {
 
   currentIndex = 0;
   answered = false;
+  firstTickTime = null;
 
   const res = document.getElementById("result");
-  res.innerHTML = "";
+  if (res) res.innerHTML = "";
+
   renderPattern("");
 
   revealTimer = setInterval(() => {
     if (currentIndex < currentPattern.length) {
       currentIndex++;
-      renderPattern(currentPattern.slice(0, currentIndex));
+      const slice = currentPattern.slice(0, currentIndex);
+      renderPattern(slice);
+
+      if (currentIndex === 1) {
+        firstTickTime = performance.now();
+      }
+
+      playTick();
     } else {
       clearInterval(revealTimer);
       revealTimer = null;
     }
-  }, 1500);
+  }, revealIntervalMs);
 }
 
+// Обновление блока статистики
+function updateStatsView() {
+  const stats = document.getElementById("stats");
+  if (!stats) return;
+
+  const totalAnswers = correctCount + wrongCount;
+  let accuracy = 0;
+  if (totalAnswers > 0) {
+    accuracy = (correctCount / totalAnswers) * 100;
+  }
+
+  let avgReaction = 0;
+  if (reactionSamples > 0) {
+    avgReaction = (sumReactionMs / reactionSamples) / 1000; // в секундах
+  }
+
+  stats.innerHTML =
+    `Всего паттернов: ${totalPatterns}<br>` +
+    `Точность: ${accuracy.toFixed(1)}%<br>` +
+    `Лучшая серия: ${bestStreak}<br>` +
+    `Среднее время реакции: ${avgReaction.toFixed(2)} с`;
+}
+
+// Проверка ответа
 function check(answer) {
   if (!currentType || answered) return;
   answered = true;
 
+  const now = performance.now();
+  if (firstTickTime) {
+    const rt = now - firstTickTime;
+    sumReactionMs += rt;
+    reactionSamples++;
+  }
+
+  totalPatterns++;
+
   const res = document.getElementById("result");
   const meta = patternMeta[currentType];
 
+  if (!meta) return;
+
   if (answer === currentType) {
     correctCount++;
+    currentStreak++;
+    if (currentStreak > bestStreak) bestStreak = currentStreak;
+
     res.innerHTML =
       `<span style="color:#3ddc84">Верно. ${meta.action}.</span>`;
   } else {
     wrongCount++;
+    currentStreak = 0;
+
     res.innerHTML =
       `<span style="color:#ff4d4f">Неверно.</span> Это ${meta.label}, ${meta.hint}.`;
   }
 
   res.innerHTML += `<br>Счёт: верно ${correctCount}, неверно ${wrongCount}.`;
+
+  updateStatsView();
 }
+
+// Сброс статистики
+function resetStats() {
+  correctCount = 0;
+  wrongCount = 0;
+  bestStreak = 0;
+  currentStreak = 0;
+  totalPatterns = 0;
+  sumReactionMs = 0;
+  reactionSamples = 0;
+
+  const res = document.getElementById("result");
+  if (res) res.innerHTML = "Статистика сброшена.";
+
+  updateStatsView();
+}
+
+// Настройка сложности по select
+function applyDifficulty() {
+  const sel = document.getElementById("difficulty");
+  if (!sel) return;
+  const v = sel.value;
+  if (v === "easy") revealIntervalMs = 1500;
+  else if (v === "medium") revealIntervalMs = 1000;
+  else if (v === "hard") revealIntervalMs = 700;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const sel = document.getElementById("difficulty");
+  if (sel) {
+    sel.addEventListener("change", applyDifficulty);
+    applyDifficulty();
+  }
+  updateStatsView();
+});
