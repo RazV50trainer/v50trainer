@@ -46,7 +46,7 @@
       white-space: nowrap;
     }
     .btn-row {
-      margin: 4px 0;
+      margin: 6px 0;
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
@@ -66,7 +66,7 @@
     }
     #generate {
       margin-top: 6px;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       padding: 8px 16px;
       font-size: 14px;
       background: #1f7aff;
@@ -78,14 +78,17 @@
       background: #155bcc;
     }
     #result {
-      margin-top: 10px;
-      font-size: 16px;
+      margin-top: 12px;
+      font-size: 17px;
       min-height: 22px;
+      text-align: center;
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
+
     <h2>V50 Trainer — паттерны 5 тиков</h2>
 
     <div id="pattern-box">
@@ -94,19 +97,29 @@
 
     <button id="generate" onclick="generate()">Сгенерировать паттерн</button>
 
+    <!-- РЯД 1 — входовые -->
     <div class="btn-row">
       <button onclick="check('impulse')">Импульс</button>
       <button onclick="check('imp_pull')">Импульс+откат</button>
       <button onclick="check('double')">Двойной укус</button>
     </div>
+
+    <!-- РЯД 2 — входовые -->
     <div class="btn-row">
       <button onclick="check('break')">Breakout</button>
       <button onclick="check('stairs')">Лестница</button>
+      <button onclick="check('bite')">Укус+импульс</button>
+    </div>
+
+    <!-- РЯД 3 — пропуск -->
+    <div class="btn-row">
       <button onclick="check('noise')">Пила</button>
       <button onclick="check('late')">Поздний вход</button>
+      <button onclick="check('fake')">Ложный выброс</button>
     </div>
 
     <div id="result"></div>
+
   </div>
 
   <script src="trainer.js"></script>
